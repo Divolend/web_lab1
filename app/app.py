@@ -2,26 +2,32 @@ import random
 from flask import Flask, render_template
 from faker import Faker
 
+# Инициализация генератора фейковых данных
 fake = Faker()
 
+# Создание экземпляра Flask-приложения
 app = Flask(__name__)
 application = app
 
+# Список UUID изображений для постов
 images_ids = ['7d4e9175-95ea-4c5f-8be5-92a6b708bb3c',
               '2d2ab7df-cdbc-48a8-a936-35bba702def5',
               '6e12f3de-d5fd-4ebb-855b-8cbc485278b7',
               'afc2cfe7-5cac-4b80-9b9a-d5c65ef0c728',
               'cab5b7f2-774e-4884-a200-0c0180fa777f']
 
+# Рекурсивная генерация комментариев с возможностью вложенных ответов
 def generate_comments(replies=True):
     comments = []
     for i in range(random.randint(1, 3)):
         comment = { 'author': fake.name(), 'text': fake.text() }
+        # Генерируем ответы только для комментариев первого уровня
         if replies:
             comment['replies'] = generate_comments(replies=False)
         comments.append(comment)
     return comments
 
+# Генерация одного поста с фейковыми данными
 def generate_post(i):
     return {
         'title': 'Заголовок поста',
@@ -32,24 +38,30 @@ def generate_post(i):
         'comments': generate_comments()
     }
 
+# Создание списка из 5 постов, отсортированных по дате (новые первыми)
 posts_list = sorted([generate_post(i) for i in range(5)], key=lambda p: p['date'], reverse=True)
 
+# Главная страница
 @app.route('/')
 def index():
     return render_template('index.html')
 
+# Страница со списком всех постов
 @app.route('/posts')
 def posts():
     return render_template('posts.html', title='Посты', posts=posts_list)
 
+# Страница отдельного поста по его индексу
 @app.route('/posts/<int:index>')
 def post(index):
     p = posts_list[index]
     return render_template('post.html', title=p['title'], post=p)
 
+# Страница "Об авторе"
 @app.route('/about')
 def about():
     return render_template('about.html', title='Об авторе')
 
+# Запуск сервера в режиме отладки
 if __name__ == '__main__':
     app.run(debug=True)
